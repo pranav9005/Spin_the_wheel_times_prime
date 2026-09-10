@@ -10,7 +10,11 @@
    If a file is missing, that logo falls back to clean text.
    ========================================================== */
 
+// const GOOGLE_SHEET_URL = "https://script.google.com/a/macros/timesinternet.in/s/AKfycbzLMG8ZcW5lPoukDQ4C8-xshQgG_1UaLZflxMVcRY5x4g8qgy1h6HKG492UvY1noq87/exec";
+
 const LOGO_BASE = "2x/";
+
+
 
 const LOGOS = {
     "TIMES PRIME": "Times Prime@2x.png",
@@ -56,7 +60,7 @@ const WHEEL_SEGMENTS = [
 ];
 
 const STORAGE_KEY = "gff_participants";
-
+const GOOGLE_SHEET_URL = "https://script.google.com/a/macros/timesinternet.in/s/AKfycbzLMG8ZcW5lPoukDQ4C8-xshQgG_1UaLZflxMVcRY5x4g8qgy1h6HKG492UvY1noq87/exec";
 /* ==========================================================
    RUNTIME STATE
    ========================================================== */
@@ -246,7 +250,7 @@ function showState(next) {
    FORM
    ========================================================== */
 
-function handleDetailsSubmit() {
+async function handleDetailsSubmit() {
     if (!validateForm()) return;
 
     state.participant = {
@@ -256,15 +260,29 @@ function handleDetailsSubmit() {
         consent: el["input-consent"].checked
     };
 
-    if (!DEMO_MODE && hasAlreadyParticipated(state.participant.mobile)) {
-        showBlockedPanel();
-        return;
+    const payload = {
+        name: state.participant.name,
+        mobile: state.participant.mobile,
+        email: state.participant.email,
+        prize: state.prize
+    };
+
+    try {
+        await fetch(GOOGLE_SHEET_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        resetExperience();
+
+    } catch (error) {
+        console.error("Google Sheet submission failed:", error);
+        resetExperience();
     }
-
-    if (!DEMO_MODE) recordParticipant(state.participant.mobile);
-
-    // Hook point: send { participant, prize } to your backend here.
-    showState("done");
 }
 
 function validateForm() {
