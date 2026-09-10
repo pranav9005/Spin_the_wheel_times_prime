@@ -1,0 +1,651 @@
+/* ==========================================================
+   TIMES PRIME — GFF STALL ACTIVATION
+   Flow: WELCOME -> SPIN -> WIN -> DETAILS -> DONE
+   Fluid across tablet, laptop, desktop and phone. Never scrolls.
+   ========================================================== */
+
+:root {
+  --navy: #080B2A;
+  --deep-navy: #0D1038;
+  --black: #050509;
+  --electric-blue: #315BFF;
+  --bright-blue: #536CFF;
+  --white: #FFFFFF;
+  --muted-white: #AEB4C8;
+  --prime-magenta: #D936C8;
+  --aeonic-green: #B7D92D;
+
+  --border-soft: rgba(83, 108, 255, 0.45);
+  --transition: 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* Wheel scales off the SHORTER side, so it always fits any screen */
+  --wheel-size: clamp(240px, min(58vh, 78vw), 560px);
+
+  /* Logo sizing — one place to tune every logo on the experience */
+  --logo-lead: clamp(26px, 4.2vh, 46px);   /* welcome screen, top centre */
+  --logo-corner: clamp(15px, 2.1vh, 24px); /* in-flow screens, top left  */
+  --logo-prize: clamp(28px, 5vh, 56px);    /* win screen prize card      */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  background: var(--black);
+  color: var(--white);
+  font-family: Inter, Arial, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ==========================================================
+   BACKDROP — the inside of the stall
+   ========================================================== */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 40%, var(--navy) 0%, var(--black) 78%);
+  z-index: 0;
+}
+
+.glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 78vmax;
+  height: 78vmax;
+  margin: -39vmax 0 0 -39vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(49, 91, 255, 0.30) 0%, rgba(49, 91, 255, 0.10) 38%, rgba(49, 91, 255, 0) 68%);
+  filter: blur(50px);
+  opacity: 0.38;
+  animation: driftGlow 16s ease-in-out infinite alternate;
+}
+
+@keyframes driftGlow {
+  0%   { transform: translate3d(-5%, -3%, 0) scale(1); }
+  50%  { transform: translate3d(4%, 3%, 0) scale(1.07); }
+  100% { transform: translate3d(-2%, 5%, 0) scale(0.98); }
+}
+
+.strip {
+  position: absolute;
+  top: 12vh;
+  bottom: 12vh;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(83,108,255,0) 0%, rgba(83,108,255,0.55) 50%, rgba(83,108,255,0) 100%);
+  box-shadow: 0 0 18px rgba(49, 91, 255, 0.45);
+  opacity: 0.6;
+}
+.strip-left  { left: 26px; }
+.strip-right { right: 26px; }
+
+.particles { position: absolute; inset: 0; }
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--bright-blue);
+  opacity: 0.22;
+  animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+  0%   { transform: translate3d(0, 10px, 0); opacity: 0; }
+  20%  { opacity: 0.26; }
+  80%  { opacity: 0.18; }
+  100% { transform: translate3d(14px, -110px, 0); opacity: 0; }
+}
+
+/* ==========================================================
+   STAGE + STATES
+   ========================================================== */
+
+.stage { position: relative; height: 100dvh; width: 100%; z-index: 2; }
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(14px, 3vh, 34px) 5vw;
+  gap: clamp(8px, 1.6vh, 20px);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.screen.is-mounted { display: flex; }
+.screen.is-active  { opacity: 1; transform: translateY(0); }
+
+.screen-foot { margin-top: clamp(6px, 1.6vh, 18px); }
+
+/* ==========================================================
+   LOGOS — Times Prime leads, prize brands sit below it
+   ========================================================== */
+
+.brand-slot { display: flex; align-items: center; justify-content: center; }
+
+.brand-slot img { display: block; width: auto; height: 100%; object-fit: contain; }
+
+/* Text fallback if a logo file is missing — never a broken image */
+.brand-slot .logo-text {
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.brandmark-center {
+  position: absolute;
+  top: clamp(16px, 4vh, 44px);
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.brand-slot-lead { height: var(--logo-lead); }
+.brand-slot-lead .logo-text { font-size: calc(var(--logo-lead) * 0.42); }
+
+.brand-slot-corner {
+  position: absolute;
+  top: clamp(14px, 3vh, 30px);
+  left: clamp(16px, 4vw, 46px);
+  height: var(--logo-corner);
+  justify-content: flex-start;
+}
+.brand-slot-corner .logo-text { font-size: calc(var(--logo-corner) * 0.5); }
+
+.screen[data-state="welcome"] .screen-foot {
+  position: absolute;
+  bottom: clamp(20px, 5.5vh, 56px);
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+}
+
+.event-tag {
+  margin-top: 10px;
+  font-size: clamp(9px, 1.1vh, 12px);
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  color: var(--bright-blue);
+}
+
+.event-tag.corner-right {
+  position: absolute;
+  top: clamp(14px, 3vh, 30px);
+  right: clamp(16px, 4vw, 46px);
+  margin: 0;
+}
+
+/* ==========================================================
+   STATE 1 — WELCOME
+   ========================================================== */
+
+.welcome-core { text-align: center; }
+
+.headline {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.6vh, 8px);
+  font-size: clamp(38px, min(9.6vh, 12vw), 92px);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: 0.045em;
+}
+.line-magenta { color: var(--prime-magenta); }
+
+.subline {
+  margin-top: clamp(12px, 2.4vh, 26px);
+  font-size: clamp(11px, 1.4vh, 14px);
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  color: var(--muted-white);
+}
+
+/* Sentence-case sublines read as speech, not as a label */
+.subline-sentence {
+  font-size: clamp(13px, 1.9vh, 19px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--muted-white);
+}
+
+/* Load sequence — total ~1s */
+[data-anim] { opacity: 0; }
+
+.screen-welcome-intro [data-anim="1"] { animation: fadeIn 340ms ease-out 60ms forwards; }
+.screen-welcome-intro [data-anim="2"] { animation: riseIn 420ms ease-out 300ms forwards; }
+.screen-welcome-intro [data-anim="3"] { animation: fadeIn 340ms ease-out 600ms forwards; }
+.screen-welcome-intro [data-anim="4"] { animation: fadeIn 340ms ease-out 820ms forwards; }
+
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================
+   CTA
+   ========================================================== */
+
+.cta {
+  min-width: 240px;
+  min-height: 58px;
+  max-width: 88vw;
+  padding: 0 clamp(24px, 4vw, 44px);
+  background: transparent;
+  border: 1px solid var(--electric-blue);
+  border-radius: 14px;
+  color: var(--white);
+  font-family: inherit;
+  font-size: clamp(12px, 1.55vh, 16px);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(49, 91, 255, 0.30), inset 0 0 18px rgba(49, 91, 255, 0.10);
+  transition: box-shadow 220ms ease, transform 140ms ease, border-color 220ms ease, filter 220ms ease;
+}
+
+.cta:hover,
+.cta:focus-visible {
+  border-color: var(--bright-blue);
+  box-shadow: 0 0 30px rgba(49, 91, 255, 0.50), inset 0 0 22px rgba(49, 91, 255, 0.16);
+  filter: brightness(1.08);
+  outline: none;
+}
+
+.cta:active { transform: scale(0.97); }
+
+.cta:disabled {
+  opacity: 0.4;
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+  filter: none;
+}
+
+.screen[data-state="welcome"] .cta:active { transform:scale(0.97); }
+
+.cta-quiet { border-color: var(--border-soft); box-shadow: none; }
+
+/* ==========================================================
+   STATE 2 — SPIN
+   ========================================================== */
+
+.spin-question {
+  font-size: clamp(13px, 2vh, 22px);
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--white);
+  text-align: center;
+}
+
+.spin-note {
+  font-size: clamp(9px, 1.25vh, 13px);
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: var(--muted-white);
+}
+
+.wheel-zone { display: flex; align-items: center; justify-content: center; }
+
+.wheel-shell {
+  position: relative;
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+  filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.7));
+}
+
+.wheel {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  position: relative;
+  z-index: 2;
+}
+
+.wheel-shell::before {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(49, 91, 255, 0.30) 40%, rgba(49, 91, 255, 0) 70%);
+  filter: blur(22px);
+  animation: idleGlow 4.5s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes idleGlow {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.9;  transform: scale(1.03); }
+}
+
+#wheel-rotor {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.seg-label {
+  font-family: Inter, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  fill: var(--white);
+}
+
+.hub-text {
+  font-family: Inter, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  fill: var(--muted-white);
+}
+
+.pointer {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  width: clamp(26px, 7%, 40px);
+  height: auto;
+  transform: translateX(-50%);
+  z-index: 3;
+  filter: drop-shadow(0 0 12px rgba(49, 91, 255, 0.85));
+}
+.pointer svg { width: 100%; height: auto; display: block; }
+
+/* ==========================================================
+   STATE 3 — WIN
+   ========================================================== */
+
+.win-core { text-align: center; }
+
+.win-title {
+  font-size: clamp(26px, min(5.6vh, 8vw), 60px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.win-sub {
+  margin-top: clamp(4px, 0.8vh, 10px);
+  font-size: clamp(12px, 1.7vh, 18px);
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  color: var(--muted-white);
+}
+
+.prize-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 1.8vh, 18px);
+  margin: clamp(14px, 2.6vh, 30px) auto 0;
+  padding: clamp(18px, 3vh, 32px) clamp(28px, 6vw, 66px);
+  min-width: min(360px, 84vw);
+  max-width: 92vw;
+  border: 1px solid var(--accent, var(--electric-blue));
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(13, 16, 56, 0.92), rgba(8, 11, 42, 0.92));
+  box-shadow: 0 0 34px rgba(49, 91, 255, 0.22), inset 0 0 30px rgba(49, 91, 255, 0.08);
+  opacity: 0;
+  transform: scale(0.9);
+  filter: blur(8px);
+}
+
+.prize-card.is-revealed {
+  animation: prizeReveal 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes prizeReveal {
+  from { opacity: 0; transform: scale(0.9); filter: blur(8px); }
+  to   { opacity: 1; transform: scale(1);   filter: blur(0); }
+}
+
+.prize-logo-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--logo-prize);
+  max-width: 70vw;
+}
+.prize-logo-slot img { display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; }
+.prize-logo-slot .logo-text {
+  font-size: calc(var(--logo-prize) * 0.5);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--white);
+}
+
+.prize-award {
+  font-size: clamp(11px, 1.6vh, 15px);
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: var(--muted-white);
+}
+
+.win-ready {
+  margin-top: clamp(14px, 2.6vh, 30px);
+  font-size: clamp(13px, 1.8vh, 18px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--muted-white);
+}
+
+/* ==========================================================
+   STATE 4 — DETAILS (claim form)
+   ========================================================== */
+
+.details-core,
+.blocked-core {
+  width: min(460px, 88vw);
+  text-align: center;
+}
+
+.headline-sm {
+  font-size: clamp(20px, 3.8vh, 38px);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.details-core .subline { margin-bottom: clamp(10px, 2.2vh, 24px); }
+
+.form { display: flex; flex-direction: column; gap: clamp(6px, 1.4vh, 16px); text-align: left; }
+
+.field label {
+  display: block;
+  margin-bottom: clamp(4px, 0.8vh, 8px);
+  font-size: clamp(9px, 1.2vh, 12px);
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  color: var(--muted-white);
+}
+
+.field input {
+  width: 100%;
+  height: clamp(46px, 7vh, 58px);
+  padding: 0 18px;
+  background: var(--deep-navy);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  color: var(--white);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.field input::placeholder { color: rgba(174, 180, 200, 0.55); letter-spacing: 0.02em; }
+
+.field input:focus {
+  outline: none;
+  border-color: var(--electric-blue);
+  box-shadow: 0 0 0 1px var(--electric-blue), 0 0 16px rgba(49, 91, 255, 0.28);
+}
+
+.field input.has-error { border-color: var(--prime-magenta); }
+
+.error {
+  min-height: 14px;
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--prime-magenta);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.error.is-visible { opacity: 1; }
+
+.consent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(10px, 1.3vh, 13px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--muted-white);
+  cursor: pointer;
+}
+
+.consent input { position: absolute; opacity: 0; pointer-events: none; }
+
+.consent .box {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border-soft);
+  border-radius: 5px;
+  background: var(--deep-navy);
+  position: relative;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.consent input:checked + .box {
+  border-color: var(--electric-blue);
+  background: rgba(49, 91, 255, 0.22);
+}
+
+.consent input:checked + .box::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid var(--white);
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+
+.consent input:focus-visible + .box { box-shadow: 0 0 0 2px rgba(49,91,255,0.6); }
+
+.blocked-core .subline { margin-top: 14px; }
+
+/* ==========================================================
+   STATE 5 — DONE
+   ========================================================== */
+
+.done-core { text-align: center; }
+
+.done-title {
+  font-size: clamp(22px, 4.4vh, 46px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+/* ==========================================================
+   DIMMER + PARTICLE BURST + FALLBACK
+   ========================================================== */
+
+.dimmer {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 9, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms ease;
+  z-index: 1;
+}
+.dimmer.is-on { opacity: 1; }
+
+.burst {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: var(--black);
+  text-align: center;
+}
+.fallback[hidden] { display: none; }
+
+/* ==========================================================
+   DEVICE ADAPTATION
+   ========================================================== */
+
+/* Portrait tablets and phones */
+@media (orientation: portrait) {
+  :root { --wheel-size: clamp(240px, min(48vh, 86vw), 560px); }
+  .strip { display: none; }
+}
+
+/* Laptops and short landscape screens — pull the wheel and type in */
+@media (orientation: landscape) and (max-height: 780px) {
+  :root {
+    --wheel-size: clamp(230px, 54vh, 460px);
+    --logo-lead: clamp(24px, 3.8vh, 38px);
+  }
+}
+
+@media (max-height: 620px) {
+  :root {
+    --wheel-size: clamp(210px, 50vh, 380px);
+    --logo-prize: clamp(24px, 4.4vh, 42px);
+  }
+  .headline { font-size: clamp(30px, min(8.6vh, 11vw), 60px); }
+  .win-title { font-size: clamp(22px, 5vh, 44px); }
+}
+
+/* Phones */
+@media (max-width: 520px) {
+  .cta { min-width: 200px; letter-spacing: 0.16em; }
+  .details-core, .blocked-core { width: 92vw; }
+  .spin-question { letter-spacing: 0.2em; }
+  .spin-note { letter-spacing: 0.2em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow, .particle, .wheel-shell::before { animation: none; }
+  .screen { transition-duration: 120ms; }
+}

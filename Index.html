@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#050509" />
+<title>Times Prime</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============ AMBIENT BACKGROUND (stall lighting) ============ -->
+<div class="backdrop" aria-hidden="true">
+  <div class="glow"></div>
+  <div class="strip strip-left"></div>
+  <div class="strip strip-right"></div>
+  <div class="particles" id="particles"></div>
+</div>
+
+<main class="stage" id="stage">
+
+  <!-- ============ STATE 1 — WELCOME ============ -->
+  <section class="screen" id="screen-welcome" data-state="welcome" aria-hidden="false">
+    <div class="brandmark brandmark-center">
+      <div class="brand-slot brand-slot-lead" data-brand-logo="lead" data-anim="1"></div>
+      <p class="event-tag" data-anim="1">GFF</p>
+    </div>
+
+    <div class="welcome-core">
+      <h1 class="headline" data-anim="2">
+        <span class="line">READY?</span>
+        <span class="line">SET.</span>
+        <span class="line line-magenta">SPIN.</span>
+      </h1>
+      <p class="subline subline-sentence" data-anim="3">There's something good on the other side.</p>
+    </div>
+
+    <div class="screen-foot" data-anim="4">
+      <button class="cta" id="btn-start" type="button">CLICK TO SPIN</button>
+    </div>
+  </section>
+
+  <!-- ============ STATE 2 — SPIN ============ -->
+  <section class="screen" id="screen-spin" data-state="spin" aria-hidden="true">
+    <div class="brand-slot brand-slot-corner" data-brand-logo="corner"></div>
+    <p class="event-tag corner-right">GFF</p>
+
+    <p class="spin-question">WHAT WILL YOU WIN?</p>
+
+    <div class="wheel-zone">
+      <div class="wheel-shell">
+        <div class="pointer" aria-hidden="true">
+          <svg viewBox="0 0 40 54" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 52 L4 16 A18 18 0 0 1 36 16 Z" fill="url(#ptrFill)" stroke="#536CFF" stroke-width="1.5"/>
+            <defs>
+              <linearGradient id="ptrFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#536CFF"/>
+                <stop offset="100%" stop-color="#315BFF"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <svg class="wheel" id="wheel" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Prize wheel">
+          <defs>
+            <radialGradient id="faceGrad" cx="50%" cy="42%" r="70%">
+              <stop offset="0%" stop-color="#141A4E"/>
+              <stop offset="60%" stop-color="#0D1038"/>
+              <stop offset="100%" stop-color="#080B2A"/>
+            </radialGradient>
+            <linearGradient id="ringGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#536CFF"/>
+              <stop offset="55%" stop-color="#315BFF"/>
+              <stop offset="100%" stop-color="#1B2E86"/>
+            </linearGradient>
+            <linearGradient id="sheen" x1="0" y1="0" x2="0.35" y2="1">
+              <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.10"/>
+              <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0.02"/>
+              <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+            </linearGradient>
+            <radialGradient id="hubGrad" cx="50%" cy="35%" r="70%">
+              <stop offset="0%" stop-color="#1B2160"/>
+              <stop offset="100%" stop-color="#080B2A"/>
+            </radialGradient>
+          </defs>
+
+          <g id="wheel-rotor">
+            <circle cx="200" cy="200" r="186" fill="url(#faceGrad)"/>
+            <g id="segments"></g>
+            <g id="labels"></g>
+            <circle cx="200" cy="200" r="186" fill="url(#sheen)" pointer-events="none"/>
+            <circle cx="200" cy="200" r="190" fill="none" stroke="#0D1038" stroke-width="9"/>
+            <circle cx="200" cy="200" r="186" fill="none" stroke="url(#ringGrad)" stroke-width="2.5" stroke-opacity="0.9"/>
+            <circle cx="200" cy="200" r="178" fill="none" stroke="#536CFF" stroke-width="1" stroke-opacity="0.28"/>
+            <circle cx="200" cy="200" r="74" fill="none" stroke="#536CFF" stroke-width="1" stroke-opacity="0.30"/>
+          </g>
+
+          <!-- Static hub -->
+          <circle cx="200" cy="200" r="62" fill="url(#hubGrad)" stroke="#315BFF" stroke-width="2"/>
+          <circle cx="200" cy="200" r="52" fill="none" stroke="#536CFF" stroke-width="1" stroke-opacity="0.45"/>
+          <text class="hub-text" x="200" y="206" text-anchor="middle">SPIN</text>
+        </svg>
+      </div>
+    </div>
+
+    <p class="spin-note">ONE SPIN ONE REWARD</p>
+
+    <div class="screen-foot">
+      <button class="cta" id="btn-spin" type="button">SPIN NOW</button>
+    </div>
+  </section>
+
+  <!-- ============ STATE 3 — WIN ============ -->
+  <section class="screen" id="screen-win" data-state="win" aria-hidden="true">
+    <div class="brand-slot brand-slot-corner" data-brand-logo="corner"></div>
+    <p class="event-tag corner-right">GFF</p>
+
+    <div class="win-core">
+      <p class="win-title">CONGRATULATIONS!</p>
+      <p class="win-sub">YOU'VE WON</p>
+
+      <div class="prize-card" id="prize-card">
+        <div class="prize-logo-slot" id="prize-logo-slot"></div>
+        <p class="prize-award" id="prize-award">MEMBERSHIP</p>
+      </div>
+
+      <p class="win-ready">Your GFF day just got better.</p>
+    </div>
+
+    <div class="screen-foot">
+      <button class="cta" id="btn-claim" type="button">FILL THE FORM TO CLAIM</button>
+    </div>
+  </section>
+
+  <!-- ============ STATE 4 — DETAILS (claim form) ============ -->
+  <section class="screen" id="screen-details" data-state="details" aria-hidden="true">
+    <div class="brand-slot brand-slot-corner" data-brand-logo="corner"></div>
+    <p class="event-tag corner-right">GFF</p>
+
+    <div class="details-core" id="details-form-wrap">
+      <h2 class="headline-sm">ONE QUICK STEP</h2>
+      <p class="subline">TELL US WHERE TO SEND YOUR REWARD</p>
+
+      <div class="form">
+        <div class="field">
+          <label for="input-name">NAME</label>
+          <input id="input-name" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Enter your name" />
+          <p class="error" id="error-name"></p>
+        </div>
+
+        <div class="field">
+          <label for="input-mobile">MOBILE NUMBER</label>
+          <input id="input-mobile" type="tel" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="Enter 10-digit mobile number" />
+          <p class="error" id="error-mobile"></p>
+        </div>
+
+        <div class="field">
+          <label for="input-email">EMAIL ADDRESS</label>
+          <input id="input-email" type="email" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Enter email address (optional)" />
+          <p class="error" id="error-email"></p>
+        </div>
+
+        <label class="consent" for="input-consent">
+          <input id="input-consent" type="checkbox" />
+          <span class="box" aria-hidden="true"></span>
+          <span class="consent-copy">I agree to receive information about my reward.</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Duplicate participation panel (DEMO_MODE = false only) -->
+    <div class="blocked-core" id="blocked-panel" hidden>
+      <h2 class="headline-sm">YOU'VE ALREADY TAKEN YOUR SPIN</h2>
+      <p class="subline">YOUR REWARD HAS ALREADY BEEN GENERATED</p>
+    </div>
+
+    <div class="screen-foot">
+      <button class="cta" id="btn-details-next" type="button">CLAIM REWARD</button>
+      <button class="cta cta-quiet" id="btn-blocked-next" type="button" hidden>NEXT PARTICIPANT</button>
+    </div>
+  </section>
+
+  <!-- ============ STATE 5 — DONE (promoter reset point) ============ -->
+  <section class="screen" id="screen-done" data-state="done" aria-hidden="true">
+    <div class="brand-slot brand-slot-corner" data-brand-logo="corner"></div>
+    <p class="event-tag corner-right">GFF</p>
+
+    <div class="done-core">
+      <p class="done-title">YOUR REWARD IS ON ITS WAY</p>
+      <!-- <p class="subline subline-sentence">Check your inbox and SMS shortly.</p> -->
+    </div>
+
+    <div class="screen-foot">
+      <button class="cta" id="btn-next" type="button">NEXT PARTICIPANT</button>
+    </div>
+  </section>
+
+</main>
+
+<div class="dimmer" id="dimmer" aria-hidden="true"></div>
+<canvas class="burst" id="burst" aria-hidden="true"></canvas>
+
+<!-- Inline failure surface (no modals, no alerts) -->
+<section class="fallback" id="fallback" hidden>
+  <p class="headline-sm">PLEASE TRY AGAIN</p>
+  <button class="cta" id="btn-retry" type="button">TRY AGAIN</button>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>
